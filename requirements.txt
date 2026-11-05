@@ -1,0 +1,10 @@
+numpy
+pandas
+scikit-learn
+umap-learn
+hdbscan
+matplotlib
+torch
+transformers
+sentence-transformers
+anthropic   # or: openai
