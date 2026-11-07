@@ -111,6 +111,39 @@ class OpenAILLM(LLMClient):
         return r.choices[0].message.content
 
 
+class GeminiLLM(LLMClient):
+    """Gemini API client for filtering and summarization."""
+
+    name = "gemini"
+
+    def __init__(self, cache_path, model):
+        super().__init__(cache_path)
+
+        from google import genai
+
+        self.client = genai.Client()
+        self.model = model
+        self.name = f"gemini:{model}"
+
+    def _raw(self, system, user):
+        from google.genai import types
+
+        response = self.client.models.generate_content(
+            model=self.model,
+            contents=user,
+            config=types.GenerateContentConfig(
+                system_instruction=system,
+                temperature=0,
+                response_mime_type="application/json",
+            ),
+        )
+
+        if not response.text:
+            raise ValueError("Gemini returned an empty response")
+
+        return response.text
+
+
 class MockLLM(LLMClient):
     """Keyword rules. ONLY for testing that the pipeline runs end to end. Never use it to report results."""
     name = "mock"
@@ -133,4 +166,4 @@ def make_llm(cfg) -> LLMClient:
         return MockLLM(cache)
     if not model:
         raise ValueError("Set cfg.llm_model or the LLM_MODEL environment variable.")
-    return {"anthropic": AnthropicLLM, "openai": OpenAILLM}[cfg.llm_backend](cache, model)
+    return {"anthropic": AnthropicLLM, "openai": OpenAILLM, "gemini": GeminiLLM}[cfg.llm_backend](cache, model)
