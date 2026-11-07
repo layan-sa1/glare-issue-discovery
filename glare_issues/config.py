@@ -25,8 +25,8 @@ class Config:
     sampling: str = "uniform"            # per-app cap: "uniform" (default, used by the team) or "sqrt" (comparison only)
 
     # ---------- LLM (problem filter + summaries) ----------
-    llm_backend: str = "mock"            # "mock" | "anthropic" | "openai"
-    llm_model: str = ""                  # e.g. set through the LLM_MODEL environment variable
+    llm_backend: str = "gemini"          # "mock" | "anthropic" | "openai" | "gemini"
+    llm_model: str = "gemini-3.1-flash-lite"    # e.g. set through the LLM_MODEL environment variable
     filter_batch_size: int = 20
     summary_samples: int = 10            # m representative reviews per cluster
     summary_top_clusters: int = 30       # summarise the largest clusters only
