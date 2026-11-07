@@ -1,4 +1,4 @@
-"""Section 2.2: conservative Arabic normalisation, language filter, duplicate merging with counts, per-app capping."""
+"""Section 2.2: conservative Arabic normalization, language filter, duplicate merging with counts, per-app capping."""
 import re
 import numpy as np
 import pandas as pd
@@ -17,7 +17,7 @@ _ANY_LETTER = re.compile(r"[A-Za-zء-ي]")
 
 
 def normalize_arabic(text: str) -> str:
-    """Conservative normalisation: dialect wording and word forms are kept (no stemming, no ta-marbuta/ya mapping)."""
+    """Conservative normalization: dialect wording and word forms are kept (no stemming, no ta-marbuta/ya mapping)."""
     if not isinstance(text, str):
         return ""
     t = _URL.sub(" ", text)
@@ -30,6 +30,7 @@ def normalize_arabic(text: str) -> str:
 
 
 def arabic_ratio(text: str) -> float:
+    """Share of Arabic letters among all Arabic and Latin letters in the text (0 if there are none)."""
     letters = _ANY_LETTER.findall(text)
     if not letters:
         return 0.0
@@ -61,6 +62,7 @@ def app_quotas(counts: pd.Series, target: int) -> pd.Series:
 
 
 def preprocess(df: pd.DataFrame, cfg) -> pd.DataFrame:
+    """Normalize, filter by language and length, merge duplicates inside each app, and cap each app's share of the sample."""
     d = df[[cfg.col_id, cfg.col_app, cfg.col_text, cfg.col_rating]].copy()
     d.columns = ["review_id", "app_id", "raw_text", "rating"]
     d["text"] = d["raw_text"].map(normalize_arabic)
