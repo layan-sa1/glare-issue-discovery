@@ -61,6 +61,33 @@ def app_quotas(counts: pd.Series, target: int) -> pd.Series:
     return q
 
 
+def sqrt_quotas(counts: pd.Series, target: int) -> pd.Series:
+    """Square-root allocation: quota proportional to sqrt(N_a), capped at N_a, redistributing the excess.
+    Used only for the sampling comparison (cfg.sampling == "sqrt"); the default is the uniform cap above."""
+    counts = counts.astype(int)
+    if counts.sum() <= target:
+        return counts
+    w = np.sqrt(counts.values.astype(float))
+    n = counts.values
+    q = np.zeros(len(n))
+    free = np.ones(len(n), bool)
+    rem = float(target)
+    for _ in range(100):
+        alloc = rem * w / w[free].sum()
+        over = free & (alloc >= n)
+        if not over.any():
+            q[free] = alloc[free]
+            break
+        q[over] = n[over]
+        rem -= n[over].sum()
+        free &= ~over
+    qi = np.floor(q).astype(int)
+    frac = pd.Series(q - qi, index=counts.index).sort_values(ascending=False, kind="stable")
+    for a in frac.index[: target - int(qi.sum())]:
+        qi[counts.index.get_loc(a)] += 1
+    return pd.Series(np.minimum(qi, n), index=counts.index)
+
+
 def preprocess(df: pd.DataFrame, cfg) -> pd.DataFrame:
     """Normalize, filter by language and length, merge duplicates inside each app, and cap each app's share of the sample."""
     d = df[[cfg.col_id, cfg.col_app, cfg.col_text, cfg.col_rating]].copy()
@@ -76,7 +103,8 @@ def preprocess(df: pd.DataFrame, cfg) -> pd.DataFrame:
                 rating_mean=("rating", "mean"), count=("review_id", "size"),
                 n_words=("n_words", "first")).reset_index()
     # per-app cap on unique texts (deterministic sample)
-    quotas = app_quotas(out.groupby("app_id").size(), cfg.target_sample)
+    quota_fn = sqrt_quotas if getattr(cfg, "sampling", "uniform") == "sqrt" else app_quotas
+    quotas = quota_fn(out.groupby("app_id").size(), cfg.target_sample)
     rng = np.random.RandomState(cfg.seed)
     parts = []
     for app, sub in out.groupby("app_id", sort=True):

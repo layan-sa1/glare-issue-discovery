@@ -22,6 +22,7 @@ class Config:
     min_arabic_ratio: float = 0.5        # keep reviews with >= 50% Arabic letters (same rule as the EDA)
     min_words: int = 2                   # drop one-word reviews (same rule as the pilot)
     target_sample: int = 30_000         # N: reviews kept after per-app capping (unique texts)
+    sampling: str = "uniform"            # per-app cap: "uniform" (default, used by the team) or "sqrt" (comparison only)
 
     # ---------- LLM (problem filter + summaries) ----------
     llm_backend: str = "mock"            # "mock" | "anthropic" | "openai"
