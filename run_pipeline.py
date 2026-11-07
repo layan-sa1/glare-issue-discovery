@@ -57,15 +57,33 @@ def stage_cluster(cfg, kept, embedders):
     for name, spec in embedders.items():
         print(f"[cluster] embedding with {name}")
         X = get_embeddings(texts, name, spec, cfg)
-        best, Z, lab_h, trials = C.tune_hdbscan(X, cfg)
-        pd.DataFrame(trials).to_csv(P(cfg, f"03_trials_hdbscan_{name}.csv"), index=False)
-        kbest, lab_k, krows = C.tune_kmeans(Z, cfg)
-        pd.DataFrame(krows).to_csv(P(cfg, f"03_trials_kmeans_{name}.csv"), index=False)
-        sk = C.internal_scores(Z, lab_k, cfg.seed)
-        rows.append({"embedding": name, "clusterer": "HDBSCAN", **{k: best[k] for k in ("silhouette", "noise_ratio", "n_clusters", "relative_validity")},
-                     "params": json.dumps({k: best[k] for k in ("n_neighbors", "n_components", "min_dist", "min_cluster_size", "min_samples", "cluster_selection_method")})})
-        rows.append({"embedding": name, "clusterer": "K-Means", "silhouette": sk["silhouette"], "noise_ratio": 0.0,
-                     "n_clusters": sk["n_clusters"], "relative_validity": float("nan"), "params": json.dumps(kbest)})
+        saved = Path(cfg.cache_dir) / f"cluster_{name}_{len(texts)}.json"
+        if saved.exists():   # delete these files after changing any search setting
+            print(f"[cluster] {name} already done, loading saved results")
+            r = json.loads(saved.read_text())
+        else:
+            best, Z, lab_h, trials = C.tune_hdbscan(X, cfg)
+            kbest, lab_k, krows = C.tune_kmeans(Z, cfg)
+            sk = C.internal_scores(Z, lab_k, cfg.seed)
+            kept_only = lab_h >= 0
+            sk_same = C.internal_scores(Z[kept_only], lab_k[kept_only], cfg.seed)
+            model_rows = [
+                {"embedding": name, "clusterer": "HDBSCAN",
+                 **{k: best[k] for k in ("silhouette", "noise_ratio", "n_clusters", "relative_validity")},
+                 "silhouette_same_reviews": best["silhouette"], "passed_limits": best["accepted"],
+                 "params": json.dumps({k: best[k] for k in ("n_neighbors", "n_components", "min_dist", "min_cluster_size", "min_samples", "cluster_selection_method")})},
+                {"embedding": name, "clusterer": "K-Means", "silhouette": sk["silhouette"], "noise_ratio": 0.0,
+                 "n_clusters": sk["n_clusters"], "relative_validity": float("nan"),
+                 "silhouette_same_reviews": sk_same["silhouette"], "passed_limits": True,
+                 "params": json.dumps(kbest)},
+            ]
+            r = {"rows": model_rows, "lab_h": lab_h.tolist(), "lab_k": lab_k.tolist(),
+                 "trials": trials, "krows": krows}
+            saved.write_text(json.dumps(r))
+        lab_h, lab_k = np.array(r["lab_h"]), np.array(r["lab_k"])
+        pd.DataFrame(r["trials"]).to_csv(P(cfg, f"03_trials_hdbscan_{name}.csv"), index=False)
+        pd.DataFrame(r["krows"]).to_csv(P(cfg, f"03_trials_kmeans_{name}.csv"), index=False)
+        rows.extend(r["rows"])
         store[(name, "HDBSCAN")] = (X, lab_h)
         store[(name, "K-Means")] = (X, lab_k)
         kept[f"cl_{name}_HDBSCAN"] = lab_h
@@ -74,7 +92,7 @@ def stage_cluster(cfg, kept, embedders):
     table.to_csv(P(cfg, "03_config_comparison.csv"), index=False)
     kept.to_csv(P(cfg, "03_clustered.csv"), index=False)
     E.fig_config_comparison(table, P(cfg, "fig_config_comparison.png"))
-    print(table[["embedding", "clusterer", "silhouette", "noise_ratio", "n_clusters"]].to_string(index=False))
+    print(table[["embedding", "clusterer", "silhouette", "silhouette_same_reviews", "noise_ratio", "n_clusters", "passed_limits"]].to_string(index=False))
     return table, store
 
 
