@@ -45,7 +45,7 @@ def tune_hdbscan(X, cfg, log=print):
         cfg.umap_space["n_neighbors"], cfg.umap_space["n_components"], cfg.umap_space["min_dist"],
         cfg.hdbscan_space["min_cluster_size"], cfg.hdbscan_space["min_samples"], cfg.hdbscan_space["cluster_selection_method"]))
     picks = rng.choice(len(grid), size=min(cfg.n_trials, len(grid)), replace=False)
-    umap_cache, trials, best = {}, [], None
+    umap_cache, trials, best, fallback = {}, [], None, None
     for idx in picks:
         nn, nc, md, mcs, ms, sel = grid[idx]
         key = (nn, nc, md)
@@ -58,10 +58,15 @@ def tune_hdbscan(X, cfg, log=print):
         rec = dict(n_neighbors=nn, n_components=nc, min_dist=md, min_cluster_size=mcs, min_samples=ms,
                    cluster_selection_method=sel, relative_validity=rv, accepted=bool(ok), **s)
         trials.append(rec)
+        if s["n_clusters"] >= 2 and (fallback is None or s["noise_ratio"] < fallback[0]["noise_ratio"]):
+            fallback = (rec, Z, labels)
         if ok and (best is None or rv > best["relative_validity"]):
             best, best_Z, best_labels = rec, Z, labels
-    if best is None:   # nothing satisfied the constraints: fall back to the least noisy trial
-        raise RuntimeError("No HDBSCAN trial satisfied the constraints; relax max_noise_ratio/min_clusters or widen the search space.")
+    if best is None:   # nothing satisfied the limits: use the least noisy usable trial
+        if fallback is None:
+            raise RuntimeError("No trial found at least 2 clusters; widen the search space.")
+        best, best_Z, best_labels = fallback
+        log("   WARNING: no trial passed the limits, using the trial with the least noise.")
     log(f"   best HDBSCAN trial: {best}")
     return best, best_Z, best_labels, trials
 
