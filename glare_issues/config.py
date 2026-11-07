@@ -20,7 +20,7 @@ class Config:
 
     # ---------- preprocessing ----------
     min_arabic_ratio: float = 0.5        # keep reviews with >= 50% Arabic letters (same rule as the EDA)
-    min_words: int = 1                   # we do NOT drop reviews by length alone
+    min_words: int = 2                   # drop one-word reviews (same rule as the pilot)
     target_sample: int = 100_000         # N: reviews kept after per-app capping (unique texts)
 
     # ---------- LLM (problem filter + summaries) ----------
