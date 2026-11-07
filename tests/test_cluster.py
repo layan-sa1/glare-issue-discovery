@@ -7,8 +7,7 @@ from glare_issues.cluster import internal_scores, rank_clusters, tune_hdbscan, t
 def test_noise_share():
     Z = np.array([[0, 0], [0, 1], [9, 9], [9, 8], [50, 50]], dtype=float)
     s = internal_scores(Z, [0, 0, 1, 1, -1])
-    assert s["n_clusters"] == 2 and s["noise_ratio"] == 0.2
-
+    assert s["n_clusters"] == 2 and abs(s["noise_ratio"] - 0.2) < 1e-9
 
 def test_ranking():
     r = rank_clusters(np.array([0, 0, 1, -1]), np.array([1, 2, 10, 99]))
