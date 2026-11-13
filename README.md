@@ -16,10 +16,10 @@ columns `review_id, app_id, content, rating` (names can be changed in `glare_iss
 The demo uses synthetic reviews, a keyword-rule mock LLM and a TF-IDF stand-in for the embeddings. Its numbers are NOT research results.
 
 ## Real run
-    export ANTHROPIC_API_KEY=...        # or OPENAI_API_KEY with --llm openai
-    python run_pipeline.py --input data/glare_sample.csv --llm anthropic --model <model-name> --target 100000 --trials 30
-Before running, check in `glare_issues/config.py` that the three embedding checkpoints exist (the third one should be the Arabic
-sentence-transformer you choose, for example a model trained as in Nacar and Koubaa).
+   export GEMINI_API_KEY=...        # or ANTHROPIC_API_KEY / OPENAI_API_KEY with --llm anthropic / openai
+python run_pipeline.py --input data/glare_sample.csv --llm gemini --model gemini-3.1-flash-lite --target 30000 --trials 30
+
+Before running, check in `glare_issues/config.py` that the three embedding checkpoints are available: AraBERT (aubmindlab/bert-base-arabertv02), MARBERT (UBC-NLP/MARBERT), and the Arabic sentence-transformer (sentence-transformers/paraphrase-multilingual-mpnet-base-v2).
 
 ## Human parts of the evaluation
 1. `results/annotations/filter_sheet.csv`: fill `human_problem` (1/0) and save as `filter_sheet_done.csv`.
