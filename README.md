@@ -1,6 +1,6 @@
 # Discovering user issues from Arabic app reviews (GLARE)
 
-Pipeline: preprocessing -> Stage 1 LLM problem filter -> Stage 2a Arabic embeddings (AraBERT, MARBERT, Arabic sentence-transformer)
+Pipeline: preprocessing -> Stage 1 LLM problem filter -> Stage 2a embeddings (AraBERT, MARBERT, multilingual sentence-transformer)
 -> UMAP -> Stage 2b HDBSCAN (main) and K-Means (baseline) -> Stage 3 LLM issue summaries -> evaluation.
 
 ## Install
@@ -9,6 +9,7 @@ Pipeline: preprocessing -> Stage 1 LLM problem filter -> Stage 2a Arabic embeddi
 ## Data
 Download the engineered reviews file of GLARE (Zenodo DOI 10.5281/zenodo.6457824) and save a CSV (or a chunk/sample) with the
 columns `review_id, app_id, content, rating` (names can be changed in `glare_issues/config.py`).
+The 30,000-review sample used in the experiments and the annotation files are available in the project Google Drive folder: https://drive.google.com/drive/folders/1wKBiPZxCv-642UH5_Ml4CAba_7ghFgT_
 
 ## Smoke test (no data, no API key, no model download)
     python run_pipeline.py --demo
@@ -16,10 +17,10 @@ columns `review_id, app_id, content, rating` (names can be changed in `glare_iss
 The demo uses synthetic reviews, a keyword-rule mock LLM and a TF-IDF stand-in for the embeddings. Its numbers are NOT research results.
 
 ## Real run
-   export GEMINI_API_KEY=...        # or ANTHROPIC_API_KEY / OPENAI_API_KEY with --llm anthropic / openai
-python run_pipeline.py --input data/glare_sample.csv --llm gemini --model gemini-3.1-flash-lite --target 30000 --trials 30
+    export GEMINI_API_KEY=...        # or ANTHROPIC_API_KEY / OPENAI_API_KEY with --llm anthropic / openai
+    python run_pipeline.py --input data/glare_sample.csv --llm gemini --model gemini-3.1-flash-lite --target 30000 --trials 30
 
-Before running, check in `glare_issues/config.py` that the three embedding checkpoints are available: AraBERT (aubmindlab/bert-base-arabertv02), MARBERT (UBC-NLP/MARBERT), and the Arabic sentence-transformer (sentence-transformers/paraphrase-multilingual-mpnet-base-v2).
+Before running, check in `glare_issues/config.py` that the three embedding checkpoints are available: AraBERT (aubmindlab/bert-base-arabertv02), MARBERT (UBC-NLP/MARBERT), and the multilingual sentence-transformer (sentence-transformers/paraphrase-multilingual-mpnet-base-v2).
 
 ## Human parts of the evaluation
 1. `results/annotations/filter_sheet.csv`: fill `human_problem` (1/0) and save as `filter_sheet_done.csv`.
@@ -28,6 +29,7 @@ Before running, check in `glare_issues/config.py` that the three embedding check
 4. `python run_pipeline.py --input ... --stage all` again (the LLM answers are cached, so it is cheap) to produce `05_evaluation_report.json` and the figures.
 
 ## Outputs (results/)
+The result files are not stored in this repository. They are included in the project Google Drive folder (see Data).
 `01_preprocessed.csv`, `02_problem_reviews.csv`, `03_config_comparison.csv` (6 configurations), `03_trials_*.csv` (all tuning trials),
 `04_ranked_issues.csv` (labels, Arabic summaries, top terms), `05_evaluation_report.json`, `05_external_scores.csv`, `fig_*.png`.
 
