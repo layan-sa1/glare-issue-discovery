@@ -19,6 +19,8 @@ The demo uses synthetic reviews, a keyword-rule mock LLM and a TF-IDF stand-in f
 ## Real run
     export GEMINI_API_KEY=...        # or ANTHROPIC_API_KEY / OPENAI_API_KEY with --llm anthropic / openai
     python run_pipeline.py --input data/glare_sample.csv --llm gemini --model gemini-3.1-flash-lite --target 30000 --trials 30
+    
+To run `notebooks/GLARE_Methodology_v2.ipynb` in Google Colab, add your Gemini key in Colab Secrets (key icon) with the name `GEMINI_API_KEY`, and turn on Notebook access.
 
 Before running, check in `glare_issues/config.py` that the three embedding checkpoints are available: AraBERT (aubmindlab/bert-base-arabertv02), MARBERT (UBC-NLP/MARBERT), and the multilingual sentence-transformer (sentence-transformers/paraphrase-multilingual-mpnet-base-v2).
 
