@@ -11,6 +11,18 @@ Download the engineered reviews file of GLARE (Zenodo DOI 10.5281/zenodo.6457824
 columns `review_id, app_id, content, rating` (names can be changed in `glare_issues/config.py`).
 The 30,000-review sample used in the experiments and the annotation files are available in the project Google Drive folder: https://drive.google.com/drive/folders/1wKBiPZxCv-642UH5_Ml4CAba_7ghFgT_
 
+## Repository Structure
+
+```
+├── glare_issues/                 # pipeline code (preprocess, embed, cluster, llm, evaluate)
+├── notebooks/
+│   └── GLARE_Methodology_v2.ipynb    # runs the whole pipeline stage by stage in Colab
+├── LLM_Code/                     # Stage 1 and Stage 3 LLM notebook (Member 5)
+├── tests/                        # unit tests (run with the demo data)
+├── run_pipeline.py               # command-line entry point
+└── requirements.txt
+```
+
 ## Smoke test (no data, no API key, no model download)
     python run_pipeline.py --demo
     python -m pytest tests
@@ -23,6 +35,14 @@ The demo uses synthetic reviews, a keyword-rule mock LLM and a TF-IDF stand-in f
 To run `notebooks/GLARE_Methodology_v2.ipynb` in Google Colab, add your Gemini key in Colab Secrets (key icon) with the name `GEMINI_API_KEY`, and turn on Notebook access.
 
 Before running, check in `glare_issues/config.py` that the three embedding checkpoints are available: AraBERT (aubmindlab/bert-base-arabertv02), MARBERT (UBC-NLP/MARBERT), and the multilingual sentence-transformer (sentence-transformers/paraphrase-multilingual-mpnet-base-v2).
+
+## Results
+
+| Part | Result |
+|---|---|
+| Problem filter (Gemini) | Precision 0.755, Recall 0.959, F1 0.845, kappa 0.805 (400 reviews) |
+| Best clustering (K-Means, Model C) | ARI 0.088, NMI 0.322 |
+| Issue summaries (6 raters, 42 clusters) | Fluency 4.76, Coherence 4.73, Consistency 4.35, Relevance 3.82 |
 
 ## Human parts of the evaluation
 1. `results/annotations/filter_sheet.csv`: fill `human_problem` (1/0) and save as `filter_sheet_done.csv`.
